@@ -7,7 +7,178 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <header><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call Center Agent Assignment</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Firebase SDK script -->
+    <script type="module">
+        // Import the Firebase SDK modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+  apiKey: "AIzaSyDkTthwGyppE_4V5BkKREMsa_Vgz4WH0Ow",
+  authDomain: "agents-name.firebaseapp.com",
+  projectId: "agents-name",
+  storageBucket: "agents-name.appspot.com",
+  messagingSenderId: "880994939187",
+  appId: "1:880994939187:web:eadb11e0f0299c58da0e46",
+  measurementId: "G-ZDN3HSC82K"
+};
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Function to add assigned agents to Firestore
+        async function assignAgents(agentNames, callCenter) {
+            try {
+                // Split agent names string into an array
+                const namesArray = agentNames.split(',').map(name => name.trim());
+                // Add each agent name to Firestore
+                await Promise.all(namesArray.map(async name => {
+                    await addDoc(collection(db, callCenter), { name });
+                }));
+                return true; // Success
+            } catch (error) {
+                console.error("Error assigning agents:", error);
+                return false; // Error
+            }
+        }
+
+        // Event listener for agent assignment form submission
+        document.getElementById('agentForm').addEventListener('submit', async function (event) {
+            event.preventDefault(); // Prevent form submission
+            const agentNames = document.getElementById('agentNames').value;
+            const callCenter = document.getElementById('callCenter').value;
+            const result = await assignAgents(agentNames, callCenter);
+            if (result) {
+                document.getElementById('message').textContent = "Agents assigned successfully.";
+            } else {
+                document.getElementById('message').textContent = "Error assigning agents. Please try again.";
+            }
+        });
+    </script>
+</head>
+<body>
     <header>
+        <h1>Call Center Agent Assignment</h1>
+    </header>
+    <main class="container">
+        <form id="agentForm">
+            <div class="form-group">
+                <label for="agentNames">Agent Names (separated by commas):</label>
+                <input type="text" id="agentNames" name="agentNames" required>
+            </div>
+            <div class="form-group">
+                <label for="callCenter">Select Call Center:</label>
+                <select id="callCenter" name="callCenter" required>
+                    <option value="">Select Call Center</option>
+                    <option value="WNS">WNS</option>
+                    <option value="BUWELO">BUWELO</option>
+                    <option value="IDEAL">IDEAL</option>
+                    <option value="TEP">TEP</option>
+                </select>
+            </div>
+            <button type="submit">Assign Agents</button>
+        </form>
+        <div class="call-center-columns">
+            <div id="WNS" class="call-center-column">
+                <h2>WNS</h2>
+                <ul></ul>
+            </div>
+            <div id="BUWELO" class="call-center-column">
+                <h2>BUWELO</h2>
+                <ul></ul>
+            </div>
+            <div id="IDEAL" class="call-center-column">
+                <h2>IDEAL</h2>
+                <ul></ul>
+            </div>
+            <div id="TEP" class="call-center-column">
+                <h2>TEP</h2>
+                <ul></ul>
+            </div>
+        </div>
+        <div id="message"></div>
+    </main>
+    <footer>
+        <!-- You can include any footer content here -->
+    </footer>
+    <!-- Custom script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('agentForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent the form from submitting normally
+
+                // Get form data
+                var formData = new FormData(this);
+                var agentNames = formData.get('agentNames');
+                var callCenter = formData.get('callCenter');
+
+                // Split agent names by comma and trim whitespace
+                var namesArray = agentNames.split(',').map(function(name) {
+                    return name.trim();
+                });
+
+                // Get current date and time
+                var currentDate = new Date().toLocaleString();
+
+                // Append each agent name with date to the selected call center column
+                var callCenterColumn = document.getElementById(callCenter);
+                var agentList = callCenterColumn.querySelector('ul');
+                if (!agentList) {
+                    agentList = document.createElement('ul');
+                    callCenterColumn.appendChild(agentList);
+                }
+                namesArray.forEach(function(name) {
+                    var agentItem = document.createElement('li');
+                    agentItem.innerHTML = '<span>' + name + '</span> <span class="assignment-date">' + currentDate + '</span>';
+                    
+                    // Add delete and edit buttons for each agent
+                    var deleteEditContainer = document.createElement('div');
+                    deleteEditContainer.classList.add('delete-edit-container');
+                    
+                    var deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.classList.add('delete-btn');
+                    deleteButton.onclick = function() {
+                        agentList.removeChild(agentItem);
+                    };
+                    
+                    var editButton = document.createElement('button');
+                    editButton.textContent = 'Edit';
+                    editButton.classList.add('edit-btn');
+                    editButton.onclick = function() {
+                        var newName = prompt('Enter new name:', agentItem.querySelector('span').textContent);
+                        if (newName !== null && newName.trim() !== '') {
+                            agentItem.querySelector('span').textContent = newName.trim();
+                        }
+                    };
+                    
+                    deleteEditContainer.appendChild(deleteButton);
+                    deleteEditContainer.appendChild(editButton);
+                    agentItem.appendChild(deleteEditContainer);
+
+                    agentList.appendChild(agentItem);
+                });
+
+                // Display confirmation message
+                document.getElementById('message').innerHTML = namesArray.length + " agent(s) assigned to " + callCenter + " call center.";
+
+                // Clear form input after submission
+                this.reset();
+            });
+        });
+    </script>
+</body>
+</html>
+
         <h1>Call Center Agent Assignment</h1>
     </header>
     <main class="container">
